@@ -1,9 +1,9 @@
 package main.java.com.foodordersystem;
 
-
 import main.java.com.foodordersystem.model.Order;
 import main.java.com.foodordersystem.model.Restaurant;
 import main.java.com.foodordersystem.model.SelectionStrategyType;
+import main.java.com.foodordersystem.model.User;
 import main.java.com.foodordersystem.service.FoodOrderService;
 import main.java.com.foodordersystem.service.FoodOrderServiceImpl;
 
@@ -11,9 +11,23 @@ import java.util.Map;
 
 public class FoodOrder {
     static FoodOrderService service = new FoodOrderServiceImpl();
-    public static void main(String[] args) {
 
-        // Onboarding restaurants
+    public static void main(String[] args) {
+        User user1 = new User("Ashwin", 500.0);
+        User user2 = new User("Harish", 300.0);
+        User user3 = new User("Shruthi", 700.0);
+        User user4 = new User("Diya", 200.0);
+
+        service.createUser(user1);
+        service.createUser(user2);
+        service.createUser(user3);
+        service.createUser(user4);
+
+        service.addToUserWallet("Ashwin", 500.0);
+        service.addToUserWallet("Harish", 300.0);
+        service.addToUserWallet("Shruthi", 700.0);
+        service.addToUserWallet("Diya", 200.0);
+
         Restaurant r1 = new Restaurant("R1", 4.5, 5);
         r1.addMenuItem("Veg Biryani", 100);
         r1.addMenuItem("Chicken Biryani", 150);
@@ -33,35 +47,23 @@ public class FoodOrder {
         r3.addMenuItem("Chicken Biryani", 175);
         service.onboardRestaurant(r3);
 
-        // Update Restaurant Menu
-        // Operation: ADD
         r1.addMenuItem("Chicken65", 250);
-        // Operation: UPDATE
         service.updateMenu("R2", "Chicken Biryani", 150);
 
-        // Place Orders
-        // Order 01
         Order order1 = new Order("Ashwin", Map.of("Idli", 3, "Dosa", 1), SelectionStrategyType.LOWEST_COST);
-        System.out.println(service.placeOrder(order1)); 
-        
-        // Order 02
+        System.out.println(service.placeOrder(order1));
+
         Order order2 = new Order("Harish", Map.of("Idli", 3, "Dosa", 1), SelectionStrategyType.LOWEST_COST);
-        System.out.println(service.placeOrder(order2)); 
+        System.out.println(service.placeOrder(order2));
 
-        // Order 03
         Order order3 = new Order("Shruthi", Map.of("Veg Biryani", 3, "Dosa", 1), SelectionStrategyType.HIGHEST_RATING);
-        System.out.println(service.placeOrder(order3));  
+        System.out.println(service.placeOrder(order3));
 
-        // Update Orders
-        // R3 marks Order 01 as COMPLETED
         service.markOrderAsCompleted("R3");
 
-        // Place Orders
-        // Order 04
         Order order4 = new Order("Harish", Map.of("Idli", 3, "Dosa", 1), SelectionStrategyType.LOWEST_COST);
-        System.out.println(service.placeOrder(order4)); 
+        System.out.println(service.placeOrder(order4));
 
-        // Order 05
         Order order5 = new Order("Diya", Map.of("Idli", 3, "Paneer Tikka", 1), SelectionStrategyType.LOWEST_COST);
         System.out.println(service.placeOrder(order5));
     }

@@ -8,9 +8,12 @@ public class Restaurant {
     private double rating;
     private int maxNoOfOrders;
     private int currentOrders;
-    private Map<String, Integer> menu; // Item -> Price
+    private Map<String, Integer> menu;
 
     public Restaurant(String name, double rating, int maxNoOfOrders) {
+        if (name == null || name.isEmpty() || rating < 0 || maxNoOfOrders <= 0) {
+            throw new IllegalArgumentException("Invalid restaurant details");
+        }
         this.name = name;
         this.rating = rating;
         this.maxNoOfOrders = maxNoOfOrders;
@@ -39,10 +42,19 @@ public class Restaurant {
     }
 
     public void addMenuItem(String item, int price) {
+        if (item == null || item.isEmpty() || price <= 0) {
+            throw new IllegalArgumentException("Invalid menu item or price");
+        }
         menu.put(item, price);
     }
 
     public void updateMenuItem(String item, int price) {
+        if (!menu.containsKey(item)) {
+            throw new IllegalArgumentException("Item does not exist in menu");
+        }
+        if (price <= 0) {
+            throw new IllegalArgumentException("Invalid price");
+        }
         if (menu.containsKey(item)) {
             menu.put(item, price);
         }
@@ -53,6 +65,9 @@ public class Restaurant {
     }
 
     public void incrementOrders() {
+        if (!canAcceptOrder()) {
+            throw new IllegalStateException("Cannot accept more orders");
+        }
         currentOrders++;
     }
 

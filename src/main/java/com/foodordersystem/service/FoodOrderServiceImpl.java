@@ -5,18 +5,19 @@ import main.java.com.foodordersystem.exception.RestaurantNotFoundException;
 import main.java.com.foodordersystem.model.Order;
 import main.java.com.foodordersystem.model.Restaurant;
 import main.java.com.foodordersystem.model.SelectionStrategyType;
-import main.java.com.foodordersystem.strategy.SelectionStrategy;
+import main.java.com.foodordersystem.model.User;
 import main.java.com.foodordersystem.strategy.HighestRatingStrategy;
 import main.java.com.foodordersystem.strategy.LowestCostStrategy;
+import main.java.com.foodordersystem.strategy.SelectionStrategy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import static main.java.com.foodordersystem.model.SelectionStrategyType.HIGHEST_RATING;
-import static main.java.com.foodordersystem.model.SelectionStrategyType.LOWEST_COST;
+import java.util.Map;
 
 public class FoodOrderServiceImpl implements FoodOrderService {
     private final List<Restaurant> restaurants = new ArrayList<>();
+    private final Map<String, User> users = new HashMap<>();
 
     @Override
     public void onboardRestaurant(Restaurant restaurant) {
@@ -31,6 +32,11 @@ public class FoodOrderServiceImpl implements FoodOrderService {
 
     @Override
     public String placeOrder(Order order) {
+        User user = users.get(order.getUser());
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
         SelectionStrategy strategy = getStrategy(order.getStrategyType());
         Restaurant selectedRestaurant = strategy.selectRestaurant(order, restaurants);
 
@@ -38,6 +44,12 @@ public class FoodOrderServiceImpl implements FoodOrderService {
             return "Cannot assign the order";
         }
 
+        double cost = calculateOrderCost(order.getItems(), selectedRestaurant.getMenu());
+        if (user.getWalletBalance() < cost) {
+            return "Insufficient wallet balance";
+        }
+
+        user.deductFromWallet(cost);
         selectedRestaurant.incrementOrders();
         return "Order assigned to " + selectedRestaurant.getName();
     }
@@ -46,6 +58,23 @@ public class FoodOrderServiceImpl implements FoodOrderService {
     public void markOrderAsCompleted(String restaurantName) {
         Restaurant restaurant = findRestaurantByName(restaurantName);
         restaurant.decrementOrders();
+    }
+
+    @Override
+    public void createUser(User user) {
+        if (users.containsKey(user.getName())) {
+            throw new IllegalArgumentException("User already exists");
+        }
+        users.put(user.getName(), user);
+    }
+
+    @Override
+    public void addToUserWallet(String userName, double amount) {
+        User user = users.get(userName);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+        user.addToWallet(amount);
     }
 
     private Restaurant findRestaurantByName(String name) {
@@ -60,5 +89,11 @@ public class FoodOrderServiceImpl implements FoodOrderService {
             case LOWEST_COST -> new LowestCostStrategy();
             case HIGHEST_RATING -> new HighestRatingStrategy();
         };
+    }
+
+    private double calculateOrderCost(Map<String, Integer> items, Map<String, Integer> menu) {
+        return items.entrySet().stream()
+                .mapToDouble(entry -> menu.get(entry.getKey()) * entry.getValue())
+                .sum();
     }
 }
