@@ -34,30 +34,40 @@ public class FoodOrderServiceImpl implements FoodOrderService {
     public String placeOrder(Order order) {
         User user = users.get(order.getUser());
         if (user == null) {
-            throw new IllegalArgumentException("User not found");
+            throw new IllegalArgumentException("User not found: " + order.getUser());
         }
 
         SelectionStrategy strategy = getStrategy(order.getStrategyType());
         Restaurant selectedRestaurant = strategy.selectRestaurant(order, restaurants);
 
         if (selectedRestaurant == null) {
-            return "Cannot assign the order";
+            return "Cannot assign the order: None of the restaurants can fulfil the order.";
+        }
+        for (String item : order.getItems().keySet()) {
+            if (!selectedRestaurant.getMenu().containsKey(item)) {
+                return "Selected restaurant cannot fulfill the order (missing item: " + item + ")";
+            }
         }
 
         double cost = calculateOrderCost(order.getItems(), selectedRestaurant.getMenu());
+
         if (user.getWalletBalance() < cost) {
-            return "Insufficient wallet balance";
+            return "Insufficient wallet balance: Order cost is " + cost + ", but wallet balance is " + user.getWalletBalance();
         }
 
         user.deductFromWallet(cost);
         selectedRestaurant.incrementOrders();
+
         return "Order assigned to " + selectedRestaurant.getName();
     }
+
+
 
     @Override
     public void markOrderAsCompleted(String restaurantName) {
         Restaurant restaurant = findRestaurantByName(restaurantName);
         restaurant.decrementOrders();
+
     }
 
     @Override
